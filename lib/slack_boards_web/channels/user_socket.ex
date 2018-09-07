@@ -2,7 +2,7 @@ defmodule SlackBoardsWeb.UserSocket do
   use Phoenix.Socket
 
   ## Channels
-  # channel "room:*", SlackBoardsWeb.RoomChannel
+  channel "emoji:*", SlackBoardsWeb.EmojiChannel
 
   ## Transports
   transport :websocket, Phoenix.Transports.WebSocket

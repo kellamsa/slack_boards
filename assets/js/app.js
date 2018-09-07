@@ -26,5 +26,6 @@ import React from "react";
 import ReactDOM from "react-dom";
 
 import Jumbotron from './components/Jumbotron';
+import RankRow from './components/RankRow.js';
 
-ReactDOM.render(<Jumbotron />, document.getElementById("react-app"));
+ReactDOM.render(<RankRow></RankRow>, document.getElementById("react-app"));
