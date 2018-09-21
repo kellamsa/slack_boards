@@ -4,44 +4,77 @@ import { Socket } from "phoenix";
 class RankRow extends Component {
   constructor(props) {
     super(props);
+
+    this.state = {
+      emojis: {},
+      emojiMap: {}
+    };
   }
 
   componentDidMount() {
-    // //slack api request here, need token
-    // fetch("")
-    //   .then(res => res.json())
-    //   .then(
-    //     (result) => {
-    //       console.log(result)
-    //     },
-    //     // Note: it's important to handle errors here
-    //     // instead of a catch() block so that we don't swallow
-    //     // exceptions from actual bugs in components.
-    //     (error) => {
-    //       console.log("Error: " + error)
-    //     }
-    //   )
+    const token = "";
+    const _this = this;
 
-      let socket = new Socket("/socket", {params: {token: window.userToken}});
-      socket.connect();
-      let channel = socket.channel("emoji:all", {});
+    fetch("https://slack.com/api/rtm.connect?token=" + token)
+      .then(res => res.json())
+      .then((result) => {
+          const sock = new WebSocket(result.url + "?token=" + token);
 
-      console.log("joining...");
-      channel.join()
-        .receive("ok", response => { console.log("Joined successfully", response) });
+          sock.addEventListener("reaction_added", function(event) {
+            console.log(event.data);
+          });
+
+          sock.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+
+            if (data.type === "reaction_added") {
+              const reaction = data.reaction
+
+              const reactionObject = { [reaction]: ((_this.state.emojis[reaction] || 0) + 1) }
+
+              const emojis = Object.assign(_this.state.emojis, reactionObject);
+
+              _this.setState({ emojis });
+            }
+          };
+        },
+        (error) => {
+          console.log("Error: " + error)
+        }
+      )
+
+    fetch("https://slack.com/api/emoji.list?token=" + token)
+      .then(res => res.json())
+      .then((result) => {
+        _this.setState({ emojiMap: result.emoji });
+      });
   }
 
   render() {
     return (
-      <div className="rank-row row">
-        <div className="ranking-container col-lg-3">
-          1.
-        </div>
-        <div className="emoji-container">
-          <img src="https://emoji.slack-edge.com/T035W0HUW/ultrafastparrot/35e4b9259b94f773.gif"></img>
-        </div>
-        <div className="count-container">
-          1000
+      <div>
+        <h1>SLACKBOARDS</h1>
+        <div className="rank-row-container row">
+          {
+            Object.entries(this.state.emojis)
+              .sort((emoji1, emoji2) => {
+                return emoji2[1] - emoji1[1];
+              })
+              .map((emoji) => {
+                const rankRowEmoji = emoji[0];
+                const rankRowCount = emoji[1];
+                const rankRowImage = this.state.emojiMap[rankRowEmoji];
+
+                return (
+                  <div className="rank-row" key={rankRowEmoji}>
+                    <div className="rank-row-emoji" styles={{display : 'inline-block'}}>{rankRowEmoji}</div>
+                    <img className="rank-row-image" src={rankRowImage} styles={{display : 'inline-block'}} />
+                    <h3 className="rank-row-count" styles={{display : 'inline-block'}}>{rankRowCount}</h3>
+                    <br />
+                  </div>
+                );
+              })
+          }
         </div>
       </div>
     )
